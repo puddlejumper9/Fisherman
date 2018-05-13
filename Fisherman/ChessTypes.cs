@@ -7,7 +7,6 @@ namespace Fisherman
     internal struct ChessPosition : ICloneable
     {
         #region static members
-        // fields
         internal static readonly ChessPosition StandardStart = new ChessPosition
         {
             blackOO = true,
@@ -29,7 +28,6 @@ namespace Fisherman
             })
         };
 
-        // methods
         internal static ChessPosition FromFEN(string boardfen, string turn, string castling)
         {
             var position = new ChessPosition
