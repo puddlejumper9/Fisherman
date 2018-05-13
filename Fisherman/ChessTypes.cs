@@ -114,7 +114,7 @@ namespace Fisherman
 
             // special case: pawn promotion for black
             if (move.From.Rank == 1 &&
-                move.To.Rank >= 0 && move.To.Rank <= 7 &&
+                move.To.Rank >= 0 && move.To.Rank <= 3 &&
                 GetPiece(move.From) == 'p')
             {
                 // pa2a1 -> a2a1q
