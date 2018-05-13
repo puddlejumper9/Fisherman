@@ -199,6 +199,7 @@ namespace Fisherman
 
         public char this[Tile t]
         {
+            // TODO use Tile.Binary to index
             get => board[t.Rank][t.File];
             set => board[t.Rank][t.File] = value;
         }
