@@ -116,7 +116,14 @@ namespace Fisherman
                 }
             }
 
-            DebugWrite("{0,9:N4} milliseconds\n", (DateTime.Now - startTime).TotalMilliseconds);
+            var timems = (DateTime.Now - startTime).TotalMilliseconds;
+            var time = timems / 1000f;
+            var nps = nodes / time;
+            var multipv = 1;
+            var scoreMode = "cp";
+            var score = 0;
+            var mainline = bestMove;
+            TellGUI("info depth {0} multipv {1} score {2} {3} nodes {4} nps {5:F0} time {6:F0} pv {7}\n", depth, multipv, scoreMode, score, nodes, nps, timems, mainline);
 
             // an infinite search must wait for the GUI to stop the search
             // a normal search can be terminated by the engine
@@ -127,8 +134,6 @@ namespace Fisherman
                 if (!infinite)
                     searching = false;
             }
-
-            TellGUI("info depth {0} nodes {1} nps {2}\n", depth, nodes, nodes / (DateTime.Now - startTime).TotalSeconds);
 
             return bestMove;
         }
