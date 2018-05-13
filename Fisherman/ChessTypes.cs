@@ -309,7 +309,7 @@ namespace Fisherman
                 // keep the low bits
                 binary &= fieldBitMask;
                 // add in the high bits
-                binary |= value << fieldBits;
+                binary |= (value & fieldBitMask) << fieldBits;
             }
         }
         // low bits
@@ -324,7 +324,7 @@ namespace Fisherman
                 // keep the high bits
                 binary &= fieldBitMask << fieldBits;
                 // add in the low bits
-                binary |= value;
+                binary |= value & fieldBitMask;
             }
         }
 
