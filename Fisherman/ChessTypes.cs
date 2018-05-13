@@ -7,27 +7,6 @@ namespace Fisherman
     internal struct ChessPosition : ICloneable
     {
         #region static members
-        internal static readonly ChessPosition StandardStart = new ChessPosition
-        {
-            blackOO = true,
-            blackOOO = true,
-            whiteOO = true,
-            whiteOOO = true,
-            whiteToMove = true,
-            enPassantSquare = new Tile(-1, -1),
-            board = new Board(new string[]
-            {
-                "rnbqkbnr",
-                "pppppppp",
-                "........",
-                "........",
-                "........",
-                "........",
-                "PPPPPPPP",
-                "RNBQKBNR"
-            })
-        };
-
         internal static ChessPosition FromFEN(string boardfen, string turn, string castling)
         {
             var position = new ChessPosition
@@ -43,11 +22,15 @@ namespace Fisherman
 
             return position;
         }
+        internal static ChessPosition FromFEN(string fen)
+        {
+            string[] args = fen.Split(' ');
+
+            return FromFEN(args[0], args[1], args[2]);
+        }
         #endregion
 
         // instance members
-        // fields
-        // value types
         Board board;
         internal bool whiteToMove, whiteOO, whiteOOO, blackOO, blackOOO;
         internal Tile enPassantSquare;
@@ -61,14 +44,10 @@ namespace Fisherman
         {
             board[t] = p;
         }
-        internal ChessPosition ApplyMove(string m)
-        {
-            var move = ChessMove.Parse(m);
-
-            return this.ApplyMove(move);
-        }
         internal ChessPosition ApplyMove(ChessMove move)
         {
+            // TODO ChessPosition.ApplyMove add support for castling
+
             var newPosition = Clone();
 
             if (move.promotion == '\0')
@@ -82,7 +61,6 @@ namespace Fisherman
 
             return newPosition;
         }
-
         public ChessPosition Clone()
         {
             var newPosition = this;
@@ -91,7 +69,6 @@ namespace Fisherman
 
             return newPosition;
         }
-
         internal string RenderMove(ChessMove move)
         {
             var promotedTo = '\0';
@@ -165,13 +142,6 @@ namespace Fisherman
             sb.AppendFormat(playerInfoFormat, whitesMove, whiteCastleLong, whiteCastleShort);
 
             return sb.ToString();
-        }
-
-        internal static ChessPosition FromFEN(string fen)
-        {
-            string[] args = fen.Split(' ');
-
-            return FromFEN(args[0], args[1], args[2]);
         }
 
         object ICloneable.Clone()
