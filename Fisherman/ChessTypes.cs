@@ -287,7 +287,10 @@ namespace Fisherman
             }
             set
             {
-                
+                // keep the high bits
+                binary &= fieldBitMask << fieldBits;
+                // add in the low bits
+                binary |= value;
             }
         }
 
