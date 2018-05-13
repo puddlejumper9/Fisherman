@@ -39,10 +39,9 @@ namespace Fisherman
                 whiteOO = castling.Contains("K"),
                 whiteOOO = castling.Contains("Q"),
                 blackOO = castling.Contains("k"),
-                blackOOO = castling.Contains("q")
+                blackOOO = castling.Contains("q"),
+                board = Board.FromFen(boardfen),
             };
-
-            // TODO read board from FEN
 
             return position;
         }
@@ -282,6 +281,46 @@ namespace Fisherman
             }
 
             return sb.ToString();
+        }
+
+        internal static Board FromFen(string boardfen)
+        {
+            var board = EmptyBoard();
+
+            var currentTile = Tile.Parse("a8");
+
+            for(int i = 0; i < boardfen.Length; i++)
+            {
+                var fenChar = boardfen[i];
+
+                // next rank
+                if (fenChar == '/')
+                {
+                    currentTile.Rank--;
+                    currentTile.File = 0;
+                }
+
+                // empty squares
+                else if (fenChar >= '0' && fenChar <= '9')
+                {
+                    var emptySquareCount = fenChar - '0';
+                    currentTile.File += emptySquareCount;
+                }
+
+                // AN ACTUAL PIECE!!! (we support fairy chess pieces by not doing any checks,
+                // but take no responsibility for the outcome)
+                else
+                    try
+                    {
+                        board[currentTile] = fenChar;
+                    }
+                    catch (IndexOutOfRangeException e)
+                    {
+                        throw new ArgumentException(string.Format("Bad FEN string {0}", boardfen), e);
+                    }
+            }
+
+            return board;
         }
     }
     internal struct Tile
