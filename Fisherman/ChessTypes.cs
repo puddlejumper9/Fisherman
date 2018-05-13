@@ -91,21 +91,43 @@ namespace Fisherman
             return newPosition;
         }
 
-        internal string RenderMove(ChessMove bestMove)
+        internal string RenderMove(ChessMove move)
         {
-            // TODO render the move to long algebraic notation
+            var promotedTo = '\0';
 
-            // TODO special case: pawn promotion for white
-            // pa7a8 -> a7a8Q
-            // pa7a7 -> a7a8R
-            // pa7a6 -> a7a8B
-            // pa7a5 -> a7a8N
+            // special case: pawn promotion for white
+            if (move.From.Rank == 6 &&
+                move.To.Rank >= 4 && move.To.Rank <= 7 &&
+                GetPiece(move.From) == 'P')
+            {
+                // Pa7a8 -> a7a8Q
+                // Pa7a7 -> a7a8R
+                // Pa7a6 -> a7a8B
+                // Pa7a5 -> a7a8N
+                // rank value from 4 to 7
 
-            // TODO special case: pawn promotion for black
+                //                5678
+                var promotions = "NBRQ";
+                promotedTo = promotions[move.To.Rank - 4];
+            }
 
-            var move = bestMove.ToString();
+            // special case: pawn promotion for black
+            if (move.From.Rank == 1 &&
+                move.To.Rank >= 0 && move.To.Rank <= 7 &&
+                GetPiece(move.From) == 'p')
+            {
+                // pa2a1 -> a2a1q
+                // pa2a2 -> a2a1r
+                // pa2a3 -> a2a1b
+                // pa2a4 -> a2a1n
+                // rank value from 0 to 3
 
-            return move;
+                //                1234
+                var promotions = "qrbn";
+                promotedTo = promotions[move.To.Rank];
+            }
+
+            return move.ToString() + promotedTo;
         }
 
         // overrides
