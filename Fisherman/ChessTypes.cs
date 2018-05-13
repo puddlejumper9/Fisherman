@@ -207,6 +207,14 @@ namespace Fisherman
     {
         char[][] board;
 
+        public static Board EmptyBoard()
+        {
+            var board = new char[8][];
+            for (int i = 0; i < board.Length; i++)
+                board[i] = "........".ToCharArray();
+
+            return new Board { board = board };
+        }
         public Board(string[] v) : this()
         {
             if (v.Length != 8)
