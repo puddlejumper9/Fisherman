@@ -246,24 +246,31 @@ namespace Fisherman
         internal int binary;
 
         // properties
-        internal int File
-        {
-            get
-            {
-                return binary >> 3;
-            }
-            set
-            {
-            }
-        }
+        // high bits
         internal int Rank
         {
             get
             {
-                return binary & 7;
+                return binary >> fieldBits;
             }
             set
             {
+                // keep the low bits
+                binary &= fieldBitMask;
+                // add in the high bits
+                binary |= value << fieldBits;
+            }
+        }
+        // low bits
+        internal int File
+        {
+            get
+            {
+                return binary & fieldBitMask;
+            }
+            set
+            {
+                
             }
         }
 
@@ -274,7 +281,7 @@ namespace Fisherman
         // methods
         internal Tile(int rank, int file)
         {
-            binary = rank << 3 | file;
+            binary = rank << fieldBits | file;
         }
         internal static Tile Parse(string t)
         {
@@ -316,7 +323,7 @@ namespace Fisherman
             set
             {
                 chessmove &= Tile.bitMask;
-                chessmove |= value.binary;
+                chessmove |= value.binary << Tile.bits;
             }
         }
         internal Tile To
