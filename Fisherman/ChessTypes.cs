@@ -167,6 +167,13 @@ namespace Fisherman
             return sb.ToString();
         }
 
+        internal static ChessPosition FromFEN(string fen)
+        {
+            string[] args = fen.Split(' ');
+
+            return FromFEN(args[0], args[1], args[2]);
+        }
+
         object ICloneable.Clone()
         {
             return Clone();

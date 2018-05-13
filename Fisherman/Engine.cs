@@ -140,7 +140,7 @@ namespace Fisherman
 
             switch (positionType)
             {
-                case "startpos": position = ChessPosition.StandardStart; break;
+                case "startpos": position = ChessPosition.FromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "); break;
                 case "fen": position = ChessPosition.FromFEN(args[2], args[3], args[4]); break;
                 default: return;
             }
