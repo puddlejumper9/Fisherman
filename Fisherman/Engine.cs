@@ -95,10 +95,11 @@ namespace Fisherman
             var nodes = 1;
             var startTime = DateTime.Now;
 
+            var bestMove = new ChessMove(0);
+
             // TODO perform a real search
             var moveValues = Evaluator.Evaluate(CurrentPosition);
 
-            ChessMove bestMove = new ChessMove(0);
             var bestValue = float.NegativeInfinity;
 
             for (int i = 0; i < moveValues.Length; i++)
@@ -117,19 +118,19 @@ namespace Fisherman
             }
 
             var timems = (DateTime.Now - startTime).TotalMilliseconds;
-            var time = timems / 1000f;
+            var time = timems / 1000.0;
             var nps = nodes / time;
             var multipv = 1;
             var scoreMode = "cp";
             var score = 0;
             var mainline = bestMove;
-            TellGUI("info depth {0} multipv {1} score {2} {3} nodes {4} nps {5:F0} time {6:F0} pv {7}\n", depth, multipv, scoreMode, score, nodes, nps, timems, mainline);
+            TellGUI("info depth {0} multipv {1} score {2} {3} nodes {4} nps {5} time {6} pv {7}\n", depth, multipv, scoreMode, score, nodes, (int)nps, (int)timems, mainline);
 
             // an infinite search must wait for the GUI to stop the search
             // a normal search can be terminated by the engine
             while (searching)
             {
-                Thread.Sleep(1);
+                Thread.Sleep(10);
                 // normal search we can stop the search
                 if (!infinite)
                     searching = false;
