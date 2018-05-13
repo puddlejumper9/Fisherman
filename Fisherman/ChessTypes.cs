@@ -294,8 +294,9 @@ namespace Fisherman
             }
         }
 
-        public Tile(int v) : this()
+        public Tile(int binary)
         {
+            this.binary = binary;
         }
 
         // methods
