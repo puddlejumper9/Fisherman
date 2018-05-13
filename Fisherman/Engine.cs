@@ -84,7 +84,7 @@ namespace Fisherman
 
             ChessMove bestMove = await Task.Run(new Func<ChessMove>(Search));
 
-            TellGUI("bestmove {0}\n", bestMove);
+            TellGUI("bestmove {0}\n", CurrentPosition.RenderMove(bestMove));
         }
 
         private ChessMove Search()

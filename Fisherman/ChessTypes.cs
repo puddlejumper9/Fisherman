@@ -91,6 +91,23 @@ namespace Fisherman
             return newPosition;
         }
 
+        internal string RenderMove(ChessMove bestMove)
+        {
+            // TODO render the move to long algebraic notation
+
+            // TODO special case: pawn promotion for white
+            // pa7a8 -> a7a8Q
+            // pa7a7 -> a7a8R
+            // pa7a6 -> a7a8B
+            // pa7a5 -> a7a8N
+
+            // TODO special case: pawn promotion for black
+
+            var move = bestMove.ToString();
+
+            return move;
+        }
+
         // overrides
         public override string ToString()
         {
@@ -371,12 +388,6 @@ namespace Fisherman
         // overrides
         public override string ToString()
         {
-            // TODO pawn promotion
-            // pa7a8 -> a7a8Q
-            // pa7a7 -> a7a8R
-            // pa7a6 -> a7a8B
-            // pa7a5 -> a7a8N
-
             return From.ToString() + To.ToString();
         }
     }
