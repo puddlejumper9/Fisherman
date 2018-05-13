@@ -8,6 +8,8 @@ namespace Fisherman
 {
     class Evaluator
     {
+        static Random rand = new Random();
+
         internal static async Task InitAsync()
         {
             await Task.Run((Action)Init);
@@ -22,7 +24,7 @@ namespace Fisherman
         {
             float[][] moveValues = new float[positions.Length][];
 
-            var bestMove = ChessMove.Parse("b7b8");
+            var bestMove = new ChessMove(rand.Next(4096));
 
             var placeholderEvaluation = new float[ChessMove.TotalPossible];
             moveValues[0] = placeholderEvaluation;
