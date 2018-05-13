@@ -158,11 +158,11 @@ namespace Fisherman
             }
         }
 
-        private async void ReadyUp()
+        private void ReadyUp()
         {
             // allow any incomplete tasks to finish
-            if (EvalInitT != null) await EvalInitT;
-            if (NewGameT != null) await NewGameT;
+            EvalInitT?.Wait();
+            NewGameT?.Wait();
 
             TellGUI("readyok\n");
         }
