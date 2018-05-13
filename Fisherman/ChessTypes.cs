@@ -478,7 +478,12 @@ namespace Fisherman
         // overrides
         public override string ToString()
         {
-            return From.ToString() + To.ToString() + promotion;
+            var s = From.ToString() + To.ToString();
+
+            if (promotion != '\0')
+                s += promotion;
+
+            return s;
         }
     }
 }
