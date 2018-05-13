@@ -223,6 +223,9 @@ namespace Fisherman
             board = new char[v.Length][];
             for(int i = 0; i < v.Length; i++)
             {
+                if(v[i].Length != 8)
+                    throw new ArgumentException("Incorrect chessboard format");
+
                 board[i] = v[i].ToCharArray();
             }
         }
