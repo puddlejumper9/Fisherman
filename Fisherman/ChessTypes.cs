@@ -254,10 +254,10 @@ namespace Fisherman
     {
         // static members
         internal static readonly string files = "abcdefgh";
-        internal static readonly int bits = fieldBits * 2;
-        internal static readonly int bitMask = 0x3F;
         private static readonly int fieldBits = 3;
         private static readonly int fieldBitMask = 7;
+        internal static readonly int bits = fieldBits * 2;
+        internal static readonly int bitMask = 0x3F;
 
         // instance members
         internal int binary;
@@ -332,42 +332,42 @@ namespace Fisherman
         internal static int TotalPossible = 4096;
 
         // fields
-        int chessmove;
+        internal int binary;
 
         // properties
         internal Tile From
         {
             get
             {
-                return new Tile(chessmove >> Tile.bits);
+                return new Tile(binary >> Tile.bits);
             }
             set
             {
-                chessmove &= Tile.bitMask;
-                chessmove |= value.binary << Tile.bits;
+                binary &= Tile.bitMask;
+                binary |= value.binary << Tile.bits;
             }
         }
         internal Tile To
         {
             get
             {
-                return new Tile(chessmove & 0x3F);
+                return new Tile(binary & 0x3F);
             }
             set
             {
-                chessmove &= Tile.bitMask << Tile.bits;
-                chessmove |= value.binary;
+                binary &= Tile.bitMask << Tile.bits;
+                binary |= value.binary;
             }
         }
 
         // constructors
         internal ChessMove(int binary)
         {
-            this.chessmove = binary;
+            this.binary = binary;
         }
         internal ChessMove(Tile from, Tile to)
         {
-            chessmove = from.binary << Tile.bits | to.binary;
+            binary = (from.binary << Tile.bits) | to.binary;
         }
 
         // methods

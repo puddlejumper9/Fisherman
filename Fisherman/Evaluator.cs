@@ -22,15 +22,17 @@ namespace Fisherman
         {
             float[][] moveValues = new float[positions.Length][];
 
-            var bestMove = ChessMove.Parse("e2e4");
-            var bestMoveHex = bestMove.From.Rank << 9 | bestMove.From.File << 6 | bestMove.To.Rank << 3 | bestMove.To.File;
+            var bestMove = ChessMove.Parse("b7b8");
 
             var placeholderEvaluation = new float[ChessMove.TotalPossible];
             moveValues[0] = placeholderEvaluation;
 
-            for (int i = 0; i < moveValues.Length; i++)
+            for (int i = 0; i < placeholderEvaluation.Length; i++)
             {
-                var moveValue = i == bestMoveHex ? 1.0f : 0.0f;
+                var moveValue = 0.0f;
+
+                if (i == bestMove.binary)
+                    moveValue = 1.0f;
 
                 placeholderEvaluation[i] = moveValue;
             }
