@@ -71,7 +71,11 @@ namespace Fisherman
         {
             var newPosition = Clone();
 
-            newPosition.SetPiece(move.From, '.');
+            if (move.promotion == '\0')
+                newPosition.SetPiece(move.From, '.');
+            else
+                newPosition.SetPiece(move.From, move.promotion);
+
             newPosition.SetPiece(move.To, GetPiece(move.From));
 
             newPosition.whiteToMove = !newPosition.whiteToMove;
@@ -404,6 +408,7 @@ namespace Fisherman
 
         // fields
         internal int binary;
+        internal char promotion;
 
         // properties
         internal Tile From
@@ -435,35 +440,45 @@ namespace Fisherman
         internal ChessMove(int binary)
         {
             this.binary = binary;
+            promotion = '\0';
         }
         internal ChessMove(Tile from, Tile to)
         {
             binary = (from.binary << Tile.bits) | to.binary;
+            promotion = '\0';
         }
 
         // methods
         internal static ChessMove Parse(string move)
         {
-            if (move[0] == 'O' || move[0] == 'o')
+            try
             {
-                // TODO castling
+                if (move[0] == 'O' || move[0] == 'o')
+                {
+                    throw new NotImplementedException();
+                    // return;
+                }
+
+                var fromTile = Tile.Parse(move.Substring(0, 2));
+                var toTile = Tile.Parse(move.Substring(2, 2));
+
+                var chessMove = new ChessMove(fromTile, toTile);
+
+                if (move.Length == 5)
+                    chessMove.promotion = move[4];
+
+                return chessMove;
             }
-
-            if (move.Length != 4)
-                throw new ArgumentException(string.Format("The move string was invalid: {0}", move));
-
-            var fromTile = Tile.Parse(move.Substring(0, 2));
-            var toTile = Tile.Parse(move.Substring(2, 2));
-
-            var chessMove = new ChessMove(fromTile, toTile);
-
-            return chessMove;
+            catch (Exception e)
+            {
+                throw new ArgumentException(string.Format("The move string was invalid: {0}", move), e);
+            }
         }
 
         // overrides
         public override string ToString()
         {
-            return From.ToString() + To.ToString();
+            return From.ToString() + To.ToString() + promotion;
         }
     }
 }
