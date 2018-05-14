@@ -187,13 +187,16 @@ namespace Fisherman
     {
         char[][] board;
 
-        public static Board EmptyBoard()
+        public static Board EmptyBoard
         {
-            var board = new char[8][];
-            for (int i = 0; i < board.Length; i++)
-                board[i] = "........".ToCharArray();
+            get
+            {
+                var board = new char[8][];
+                for (int i = 0; i < board.Length; i++)
+                    board[i] = "........".ToCharArray();
 
-            return new Board { board = board };
+                return new Board { board = board };
+            }
         }
         public Board(string[] v) : this()
         {
@@ -266,7 +269,7 @@ namespace Fisherman
 
         internal static Board FromFen(string boardfen)
         {
-            var board = EmptyBoard();
+            var board = EmptyBoard;
 
             var currentSquare = Square.Parse("a8");
 
@@ -291,14 +294,7 @@ namespace Fisherman
                 // AN ACTUAL PIECE!!! (we support fairy chess pieces by not doing any checks,
                 // but take no responsibility for the outcome)
                 else
-                    try
-                    {
-                        board[currentSquare] = fenChar;
-                    }
-                    catch (IndexOutOfRangeException e)
-                    {
-                        throw new ArgumentException(string.Format("Bad FEN string {0}", boardfen), e);
-                    }
+                    board[currentSquare] = fenChar;
             }
 
             return board;
