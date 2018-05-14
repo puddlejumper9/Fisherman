@@ -6,7 +6,6 @@ namespace Fisherman
 {
     internal struct ChessPosition : ICloneable
     {
-        #region static members
         internal static ChessPosition FromFEN(string boardfen, string turn, string castling)
         {
             var position = new ChessPosition
@@ -28,7 +27,6 @@ namespace Fisherman
 
             return FromFEN(args[0], args[1], args[2]);
         }
-        #endregion
 
         // instance members
         Board board;
@@ -47,15 +45,20 @@ namespace Fisherman
         internal ChessPosition ApplyMove(ChessMove move)
         {
             // TODO ChessPosition.ApplyMove add support for castling
+            // TODO ChessPositoin.ApplyMove flag enPassant square
 
             var newPosition = Clone();
 
+            char piece;
             if (move.promotion == '\0')
-                newPosition.SetPiece(move.From, '.');
+                piece = GetPiece(move.From);
             else
-                newPosition.SetPiece(move.From, move.promotion);
+                piece = move.promotion;
 
-            newPosition.SetPiece(move.To, GetPiece(move.From));
+            // clear source square
+            newPosition.SetPiece(move.From, '.');
+            // set destination square to piece
+            newPosition.SetPiece(move.To, piece);
 
             newPosition.whiteToMove = !newPosition.whiteToMove;
 
@@ -180,7 +183,6 @@ namespace Fisherman
         public static bool operator ==(ChessPosition a, ChessPosition b) => a.Equals(b);
         public static bool operator !=(ChessPosition a, ChessPosition b) => !(a == b);
     }
-
     internal struct Board : ICloneable
     {
         char[][] board;
