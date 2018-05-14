@@ -32,6 +32,11 @@ namespace Fisherman
         Board board;
         internal bool whiteToMove, whiteOO, whiteOOO, blackOO, blackOOO;
         internal Square enPassantSquare;
+        // for easy viewing in debugger
+        internal string tostring
+        {
+            get => ToString();
+        }
 
         // methods
         internal char GetPiece(Square t)
@@ -269,13 +274,13 @@ namespace Fisherman
 
         internal static Board FromFen(string boardfen)
         {
-            var board = EmptyBoard;
+            Board board = EmptyBoard;
 
-            var currentSquare = Square.Parse("a8");
+            Square currentSquare = Square.Parse("a8");
 
             for(int i = 0; i < boardfen.Length; i++)
             {
-                var fenChar = boardfen[i];
+                char fenChar = boardfen[i];
 
                 // next rank
                 if (fenChar == '/')
@@ -287,14 +292,17 @@ namespace Fisherman
                 // empty squares
                 else if (fenChar >= '0' && fenChar <= '9')
                 {
-                    var emptySquareCount = fenChar - '0';
+                    int emptySquareCount = fenChar - '0';
                     currentSquare.File += emptySquareCount;
                 }
 
                 // AN ACTUAL PIECE!!! (we support fairy chess pieces by not doing any checks,
                 // but take no responsibility for the outcome)
                 else
+                {
                     board[currentSquare] = fenChar;
+                    currentSquare.File++;
+                }
             }
 
             return board;
