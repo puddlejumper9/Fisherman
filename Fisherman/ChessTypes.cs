@@ -327,8 +327,8 @@ namespace Fisherman
         public override string ToString()
         {
             /* * OOO OO
-             * RNBQKBNR
-             * PPPPPPPP
+             * rnbqkbnr
+             * pppppppp
              * ........
              * ........
              */
