@@ -24,7 +24,14 @@ namespace Fisherman
         {
             float[][] moveValues = new float[positions.Length][];
 
-            var bestMove = new ChessMove(rand.Next(4096));
+            ChessMove bestMove = new ChessMove(0);
+            var isLegalMove = false;
+
+            while(!isLegalMove)
+            {
+                bestMove = new ChessMove(rand.Next(4096));
+                isLegalMove = positions[0].IsLegal(bestMove);
+            }
 
             var placeholderEvaluation = new float[ChessMove.TotalPossible];
             moveValues[0] = placeholderEvaluation;

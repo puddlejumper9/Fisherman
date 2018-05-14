@@ -29,13 +29,21 @@ namespace Fisherman
         }
 
         // instance members
-        Board board;
-        internal bool whiteToMove, whiteOO, whiteOOO, blackOO, blackOOO;
-        internal Square enPassantSquare;
         // for easy viewing in debugger
         internal string tostring
         {
             get => ToString();
+        }
+        Board board;
+        internal bool whiteToMove, whiteOO, whiteOOO, blackOO, blackOOO;
+        internal Square enPassantSquare;
+        public bool InCheck
+        {
+            get
+            {
+                // TODO see if we're in check
+                return false;
+            }
         }
 
         // methods
@@ -115,6 +123,205 @@ namespace Fisherman
 
             return move.ToString() + promotedTo;
         }
+        #region legality checking
+        internal bool IsLegal(ChessMove move)
+        {
+            // move = ChessMove.Parse("a7a5");
+            // ensure source and destination squares are actually on the board
+            if (!move.IsLegal())
+                return false;
+
+            bool blackToMove = !whiteToMove;
+
+            char movedPiece = GetPiece(move.From);
+
+            // you can only move your own pieces
+            bool isMovedPieceWhite = IsWhitePiece(movedPiece);
+            bool isMovedPieceBlack = IsBlackPicee(movedPiece);
+
+            if (whiteToMove && !isMovedPieceWhite)
+                return false;
+            if (blackToMove && !isMovedPieceBlack)
+                return false;
+
+            // you can't take your own pieces
+            char takenPiece = GetPiece(move.To);
+
+            bool isTakenPieceWhite = IsWhitePiece(takenPiece);
+            bool isTakenPieceBlack = IsBlackPicee(takenPiece);
+
+            // TODO castling is represented as the king taking the rook so we need to check for that
+
+            if (whiteToMove && isTakenPieceWhite)
+                return false;
+            if (blackToMove && isTakenPieceBlack)
+                return false;
+
+            return CheckPieceRules(movedPiece, move, takenPiece);
+        }
+        private bool IsWhitePiece(char piece) => piece >= 'A' && piece <= 'Z';
+        private bool IsBlackPicee(char piece) => piece >= 'a' && piece <= 'z';
+        private bool CheckPieceRules(char piece, ChessMove move, char takenPiece)
+        {
+            // convert black pieces to white
+            if (piece >= 'a' && piece <= 'z')
+                piece -= ' ';
+
+            var rankDistance = move.To.Rank - move.From.Rank;
+
+            // we don't care about moving left vs right so normalize to simplify checking
+            var fileDistance = move.To.File - move.From.File;
+            if (fileDistance < 0) fileDistance = -fileDistance;
+
+            // forward/backward is only necessary for pawns
+            if (piece == 'P')
+            {
+                // legal direction depends on who's move it is
+                if (whiteToMove) {
+                    // white's pawn moving backward is illegal
+                    if (rankDistance <= 0)
+                        return false;
+                } else
+                // black's pawn moving backward is illegal
+                if (rankDistance >= 0)
+                    return false;
+
+                // normalize distance to positive now that we've verified the direction
+                if (rankDistance < 0)
+                    rankDistance = -rankDistance;
+
+                // capturing move
+                // the en passant square will always be behind an enemy pawn so it can't be directly in front of us
+                if (takenPiece != '.' || enPassantSquare == move.To)
+                {
+                    // must move left or right and forward exactly one square
+                    if (fileDistance != 1 || rankDistance != 1)
+                        return false;
+                    else return true;
+                }
+                // non-capturing move
+                else
+                {
+                    // can only move straight forward
+                    if (fileDistance != 0)
+                        return false;
+
+                    // moving one square is always allowed since we're not capturing
+                    if (rankDistance == 1)
+                        return true;
+                    
+                    // moving two squares is the last option
+                    if (rankDistance != 2)
+                        return false;
+
+                    // moving two squares is only allowed from 2nd rank for white
+                    if (whiteToMove)
+                    {
+                        if (move.From.Rank != 1)
+                            return false;
+
+                        // with the 3rd rank empty
+                        if (GetPiece(new Square(2, move.From.File)) == '.')
+                            return true;
+                        else return false;
+                    }
+                    // and 7th rank for black
+                    else
+                    {
+                        if (move.From.Rank != 6)
+                            return false;
+
+                        // with the 6th rank empty
+                        if (GetPiece(new Square(5, move.From.File)) == '.')
+                            return true;
+                        else return false;
+                    }
+                }
+            }
+
+            // all other pieces
+            else
+            {
+                // normalize rank distance to positive since we only care for pawns
+                // and it simplifies checking
+                if (rankDistance < 0)
+                    rankDistance = -rankDistance;
+
+                switch (piece)
+                {
+                    case 'R':
+                        // it can't move along both a rank and file simultaneously
+                        if (rankDistance == 0 || fileDistance == 0)
+                            // check path is clear
+                            break;
+                        else
+                            return false;
+
+                    case 'N':
+                        // knight must move 2 squares in either direction
+                        if ((rankDistance == 2 || fileDistance == 2) &&
+                            // and then one square in either direction
+                            (rankDistance == 1 || fileDistance == 1))
+                            // no path checking
+                            return true;
+                        else
+                            return false;
+
+                    case 'B':
+                        // bishop can only move diagonally
+                        if (fileDistance != rankDistance)
+                            return false;
+                        else
+                            // check path clear
+                            break;
+
+                    case 'Q':
+                        // can't move along rank or file or they must be the same
+                        if (rankDistance == 0 || fileDistance == 0 || rankDistance == fileDistance)
+                            // check path clear
+                            break;
+                        else
+                            return false;
+
+                    case 'K':
+                        // we don't check castling here because it must be done while checking for capturing your own pieces
+                        // king can move up to one square along both rank and file
+                        if ((fileDistance <= 1 && rankDistance <= 1))
+                            return !this.ApplyMove(move).InCheck;
+                        else
+                            return false;
+
+                    default:
+                        // assume unkown piece's moves are legal
+                        return true;
+                }
+
+                return IsPathClear(move);
+            }
+        }
+        private bool IsPathClear(ChessMove move)
+        {
+            int rankDirection = Direction(move.From.Rank, move.To.Rank);
+            int fileDirection = Direction(move.From.File, move.To.File);
+
+            var direction = new Square(rankDirection, fileDirection);
+
+            for (var currentSquare = move.From + direction; currentSquare != move.To; currentSquare += direction)
+                if (GetPiece(currentSquare) != '.')
+                    return false;
+
+            return true;
+        }
+        private int Direction(int from, int to)
+        {
+            if (to > from)
+                return 1;
+            else if (to == from)
+                return 0;
+            else
+                return -1;
+        }
+        #endregion
 
         // overrides
         public override string ToString()
@@ -360,7 +567,7 @@ namespace Fisherman
         // methods
         internal Square(int rank, int file)
         {
-            binary = rank << fieldBits | file;
+            binary = (rank << fieldBits) | (file & fieldBitMask);
         }
         internal static Square Parse(string t)
         {
@@ -380,6 +587,32 @@ namespace Fisherman
         public override string ToString()
         {
             return files[File] + (Rank + 1).ToString();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Square))
+            {
+                return false;
+            }
+
+            var square = (Square)obj;
+            return binary == square.binary;
+        }
+
+        public override int GetHashCode()
+        {
+            return 1664753756 + binary.GetHashCode();
+        }
+
+        // operators
+        public static bool operator ==(Square a, Square b) => a.binary == b.binary;
+        public static bool operator !=(Square a, Square b) => !(a == b);
+        public static Square operator +(Square a, Square b)
+        {
+            a.Rank += b.Rank;
+            a.File += b.File;
+            return a;
         }
     }
     internal struct ChessMove
@@ -457,6 +690,7 @@ namespace Fisherman
                 throw new ArgumentException(string.Format("The move string was invalid: {0}", move), e);
             }
         }
+        internal bool IsLegal() => binary < 4096;
 
         // overrides
         public override string ToString()
