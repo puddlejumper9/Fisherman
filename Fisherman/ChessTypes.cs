@@ -33,14 +33,14 @@ namespace Fisherman
         // instance members
         Board board;
         internal bool whiteToMove, whiteOO, whiteOOO, blackOO, blackOOO;
-        internal Tile enPassantSquare;
+        internal Square enPassantSquare;
 
         // methods
-        internal char GetPiece(Tile t)
+        internal char GetPiece(Square t)
         {
             return board[t];
         }
-        internal void SetPiece(Tile t, char p)
+        internal void SetPiece(Square t, char p)
         {
             board[t] = p;
         }
@@ -162,7 +162,7 @@ namespace Fisherman
                    whiteOOO == position.whiteOOO &&
                    blackOO == position.blackOO &&
                    blackOOO == position.blackOOO &&
-                   EqualityComparer<Tile>.Default.Equals(enPassantSquare, position.enPassantSquare);
+                   EqualityComparer<Square>.Default.Equals(enPassantSquare, position.enPassantSquare);
         }
         public override int GetHashCode()
         {
@@ -174,7 +174,7 @@ namespace Fisherman
             hashCode = hashCode * -1521134295 + whiteOOO.GetHashCode();
             hashCode = hashCode * -1521134295 + blackOO.GetHashCode();
             hashCode = hashCode * -1521134295 + blackOOO.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<Tile>.Default.GetHashCode(enPassantSquare);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Square>.Default.GetHashCode(enPassantSquare);
             return hashCode;
         }
         public static bool operator ==(ChessPosition a, ChessPosition b) => a.Equals(b);
@@ -208,9 +208,9 @@ namespace Fisherman
             }
         }
 
-        public char this[Tile t]
+        public char this[Square t]
         {
-            // TODO use Tile.Binary to index
+            // TODO use Square.Binary to index
             get => board[t.Rank][t.File];
             set => board[t.Rank][t.File] = value;
         }
@@ -266,7 +266,7 @@ namespace Fisherman
         {
             var board = EmptyBoard();
 
-            var currentTile = Tile.Parse("a8");
+            var currentSquare = Square.Parse("a8");
 
             for(int i = 0; i < boardfen.Length; i++)
             {
@@ -275,15 +275,15 @@ namespace Fisherman
                 // next rank
                 if (fenChar == '/')
                 {
-                    currentTile.Rank--;
-                    currentTile.File = 0;
+                    currentSquare.Rank--;
+                    currentSquare.File = 0;
                 }
 
                 // empty squares
                 else if (fenChar >= '0' && fenChar <= '9')
                 {
                     var emptySquareCount = fenChar - '0';
-                    currentTile.File += emptySquareCount;
+                    currentSquare.File += emptySquareCount;
                 }
 
                 // AN ACTUAL PIECE!!! (we support fairy chess pieces by not doing any checks,
@@ -291,7 +291,7 @@ namespace Fisherman
                 else
                     try
                     {
-                        board[currentTile] = fenChar;
+                        board[currentSquare] = fenChar;
                     }
                     catch (IndexOutOfRangeException e)
                     {
@@ -302,7 +302,7 @@ namespace Fisherman
             return board;
         }
     }
-    internal struct Tile
+    internal struct Square
     {
         // static members
         internal static readonly string files = "abcdefgh";
@@ -346,28 +346,28 @@ namespace Fisherman
             }
         }
 
-        public Tile(int binary)
+        public Square(int binary)
         {
             this.binary = binary;
         }
 
         // methods
-        internal Tile(int rank, int file)
+        internal Square(int rank, int file)
         {
             binary = rank << fieldBits | file;
         }
-        internal static Tile Parse(string t)
+        internal static Square Parse(string t)
         {
-            var tile = new Tile();
+            var square = new Square();
 
             if (t[0] >= 'a')
-                tile.File = t[0] - 'a';
+                square.File = t[0] - 'a';
             else
-                tile.File = t[0] - 'A';
+                square.File = t[0] - 'A';
 
-            tile.Rank = t[1] - '1';
+            square.Rank = t[1] - '1';
 
-            return tile;
+            return square;
         }
 
         // overrides
@@ -379,7 +379,7 @@ namespace Fisherman
     internal struct ChessMove
     {
         /// <summary>
-        /// Number of combinations of source and destination tiles
+        /// Number of combinations of source and destination squares
         /// </summary>
         internal static int TotalPossible = 4096;
 
@@ -388,27 +388,27 @@ namespace Fisherman
         internal char promotion;
 
         // properties
-        internal Tile From
+        internal Square From
         {
             get
             {
-                return new Tile(binary >> Tile.bits);
+                return new Square(binary >> Square.bits);
             }
             set
             {
-                binary &= Tile.bitMask;
-                binary |= value.binary << Tile.bits;
+                binary &= Square.bitMask;
+                binary |= value.binary << Square.bits;
             }
         }
-        internal Tile To
+        internal Square To
         {
             get
             {
-                return new Tile(binary & 0x3F);
+                return new Square(binary & 0x3F);
             }
             set
             {
-                binary &= Tile.bitMask << Tile.bits;
+                binary &= Square.bitMask << Square.bits;
                 binary |= value.binary;
             }
         }
@@ -419,9 +419,9 @@ namespace Fisherman
             this.binary = binary;
             promotion = '\0';
         }
-        internal ChessMove(Tile from, Tile to)
+        internal ChessMove(Square from, Square to)
         {
-            binary = (from.binary << Tile.bits) | to.binary;
+            binary = (from.binary << Square.bits) | to.binary;
             promotion = '\0';
         }
 
@@ -436,10 +436,10 @@ namespace Fisherman
                     // return;
                 }
 
-                var fromTile = Tile.Parse(move.Substring(0, 2));
-                var toTile = Tile.Parse(move.Substring(2, 2));
+                var fromSquare = Square.Parse(move.Substring(0, 2));
+                var toSquare = Square.Parse(move.Substring(2, 2));
 
-                var chessMove = new ChessMove(fromTile, toTile);
+                var chessMove = new ChessMove(fromSquare, toSquare);
 
                 if (move.Length == 5)
                     chessMove.promotion = move[4];

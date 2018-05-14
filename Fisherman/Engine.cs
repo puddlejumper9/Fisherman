@@ -112,7 +112,7 @@ namespace Fisherman
                     var toRank = i >> 3 & 7;
                     var toFile = i & 7;
 
-                    bestMove = new ChessMove(new Tile(fromRank, fromFile), new Tile(toRank, toFile));
+                    bestMove = new ChessMove(new Square(fromRank, fromFile), new Square(toRank, toFile));
                     bestValue = moveValue;
                 }
             }
