@@ -160,7 +160,10 @@ namespace Fisherman
 
             for (int i = movesIndex + 1; i < args.Length; i++)
             {
-                position = position.ApplyMove(ChessMove.Parse(args[i]));
+                ChessMove move = ChessMove.Parse(args[i]);
+
+                position = position.ApplyMove(move);
+                game.Add(new GameState(position, move));
             }
         }
 
