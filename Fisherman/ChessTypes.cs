@@ -11,13 +11,49 @@ namespace Fisherman
             var position = new ChessPosition
             {
                 whiteToMove = (turn == "w"),
-
-                whiteOO = castling.Contains("K"),
-                whiteOOO = castling.Contains("Q"),
-                blackOO = castling.Contains("k"),
-                blackOOO = castling.Contains("q"),
                 board = Board.FromFen(boardfen),
             };
+
+            foreach(char c in castling)
+            {
+                switch (c)
+                {
+                    case 'K':
+                    case 'Q':
+                        for (Square ws = new Square(0); ws.binary < 8; ws.binary++)
+                            if (position.GetPiece(ws) == 'R')
+                                if (position.whiteOOO == null)
+                                    position.whiteOOO = ws.File;
+                                else
+                                    position.whiteOO = ws.File;
+                        break;
+
+                    case 'k':
+                    case 'q':
+                        for (Square bs = new Square(64 - 8); bs.binary < 64; bs.binary++)
+                            if (position.GetPiece(bs) == 'r')
+                                if (position.blackOOO == null)
+                                    position.blackOOO = bs.File;
+                                else
+                                    position.blackOO = bs.File;
+                        break;
+
+                    default:
+                        if (c >= 'A' && c <= 'H')
+                            if (position.whiteOOO == null)
+                                position.whiteOOO = c - 'A';
+                            else
+                                position.whiteOO = c - 'A';
+
+                        else if (c >= 'a' && c <= 'h')
+                            if (position.blackOOO == null)
+                                position.blackOOO = c - 'a';
+                            else
+                                position.blackOO = c - 'a';
+
+                        break;
+                }
+            }
 
             return position;
         }
@@ -35,7 +71,8 @@ namespace Fisherman
             get => ToString();
         }
         Board board;
-        internal bool whiteToMove, whiteOO, whiteOOO, blackOO, blackOOO;
+        internal bool whiteToMove;
+        internal int? whiteOO, whiteOOO, blackOO, blackOOO;
         internal Square enPassantSquare;
         public bool InCheck
         {
@@ -339,8 +376,8 @@ namespace Fisherman
             
             // render black info
             var blacksMove = !whiteToMove ? "*" : "";
-            var blackCastleLong = blackOOO ? "OOO" : "";
-            var blackCastleShort = blackOO ? "OO" : "";
+            var blackCastleLong = blackOOO ?? ' ';
+            var blackCastleShort = blackOO ?? ' ';
 
             sb.AppendFormat(playerInfoFormat, blacksMove, blackCastleLong, blackCastleShort);
             sb.AppendLine();
@@ -351,8 +388,8 @@ namespace Fisherman
 
             // render white info
             var whitesMove = whiteToMove ? "*" : "";
-            var whiteCastleLong = whiteOOO ? "OOO" : "";
-            var whiteCastleShort = whiteOO ? "OO" : "";
+            var whiteCastleLong = whiteOOO ?? ' ';
+            var whiteCastleShort = whiteOO ?? ' ';
 
             sb.AppendFormat(playerInfoFormat, whitesMove, whiteCastleLong, whiteCastleShort);
 
@@ -523,6 +560,7 @@ namespace Fisherman
         private static readonly int fieldBitMask = 7;
         internal static readonly int bits = fieldBits * 2;
         internal static readonly int bitMask = 0x3F;
+        internal static readonly int MaxValue = 1 << bits;
 
         // instance members
         internal int binary;
