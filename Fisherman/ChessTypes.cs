@@ -12,6 +12,7 @@ namespace Fisherman
             {
                 whiteToMove = (turn == "w"),
                 board = Board.FromFen(boardfen),
+                enPassantSquare = new Square(64),
             };
 
             foreach(char c in castling)
@@ -74,14 +75,6 @@ namespace Fisherman
         internal bool whiteToMove;
         internal int? whiteOO, whiteOOO, blackOO, blackOOO;
         internal Square enPassantSquare;
-        public bool InCheck
-        {
-            get
-            {
-                // TODO see if we're in check
-                return false;
-            }
-        }
 
         // methods
         internal char GetPiece(Square t)
@@ -103,7 +96,11 @@ namespace Fisherman
             if (move.promotion == '\0')
                 piece = GetPiece(move.From);
             else
+            {
                 piece = move.promotion;
+                if (whiteToMove && piece >= 'a')
+                    piece -= ' ';
+            }
 
             // clear source square
             newPosition.SetPiece(move.From, '.');
@@ -168,37 +165,18 @@ namespace Fisherman
             if (!move.IsLegal())
                 return false;
 
-            bool blackToMove = !whiteToMove;
-
-            char movedPiece = GetPiece(move.From);
-
             // you can only move your own pieces
-            bool isMovedPieceWhite = IsWhitePiece(movedPiece);
-            bool isMovedPieceBlack = IsBlackPicee(movedPiece);
-
-            if (whiteToMove && !isMovedPieceWhite)
+            if (!IsOwnPiece(move.From))
                 return false;
-            if (blackToMove && !isMovedPieceBlack)
-                return false;
-
-            // you can't take your own pieces
-            char takenPiece = GetPiece(move.To);
-
-            bool isTakenPieceWhite = IsWhitePiece(takenPiece);
-            bool isTakenPieceBlack = IsBlackPicee(takenPiece);
 
             // TODO castling is represented as the king taking the rook so we need to check for that
 
-            if (whiteToMove && isTakenPieceWhite)
-                return false;
-            if (blackToMove && isTakenPieceBlack)
+            if (IsOwnPiece(move.To))
                 return false;
 
-            return CheckPieceRules(movedPiece, move, takenPiece);
+            return CheckPieceRules(GetPiece(move.From), move);
         }
-        private bool IsWhitePiece(char piece) => piece >= 'A' && piece <= 'Z';
-        private bool IsBlackPicee(char piece) => piece >= 'a' && piece <= 'z';
-        private bool CheckPieceRules(char piece, ChessMove move, char takenPiece)
+        private bool CheckPieceRules(char piece, ChessMove move)
         {
             // convert black pieces to white
             if (piece >= 'a' && piece <= 'z')
@@ -229,7 +207,7 @@ namespace Fisherman
 
                 // capturing move
                 // the en passant square will always be behind an enemy pawn so it can't be directly in front of us
-                if (takenPiece != '.' || enPassantSquare == move.To)
+                if (GetPiece(move.To) != '.' || enPassantSquare == move.To)
                 {
                     // must move left or right and forward exactly one square
                     if (fileDistance != 1 || rankDistance != 1)
@@ -358,7 +336,424 @@ namespace Fisherman
             else
                 return -1;
         }
+        internal bool InCheck
+        {
+            get
+            {
+                // get the square of the enemy king to see if he's in check
+                Square kingSquare;
+                for(kingSquare = new Square(0); kingSquare.binary < Square.MaxValue; kingSquare.binary++)
+                {
+                    var piece = GetPiece(kingSquare);
+
+                    if (piece == (whiteToMove ? 'k' : 'K'))
+                        break;
+                }
+
+                var moves = new List<ChessMove>();
+                GetKnightMoves(kingSquare, moves, true);
+                for (int i = 0; i < moves.Count; i++)
+                    if (GetPiece(moves[i].To) == (whiteToMove ? 'N' : 'n'))
+                        return true;
+                moves.Clear();
+
+                GetBishopMoves(kingSquare, moves, true);
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    var piece = GetPiece(moves[i].To);
+                    if (piece == (whiteToMove ? 'B' : 'b') || piece == (whiteToMove ? 'Q' : 'q'))
+                        return true;
+                }
+                moves.Clear();
+
+                GetRookMoves(kingSquare, moves, true);
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    var piece = GetPiece(moves[i].To);
+                    if (piece == (whiteToMove ? 'R' : 'r') || piece == (whiteToMove ? 'Q' : 'q'))
+                        return true;
+                }
+                moves.Clear();
+
+                GetKingMoves(kingSquare, moves, true);
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    var piece = GetPiece(moves[i].To);
+                    if (piece == (whiteToMove ? 'K' : 'k'))
+                        return true;
+                }
+
+                var kingFile = kingSquare.File;
+                var attackingPawn = (whiteToMove ? 'P' : 'p');
+                var attackingPawnRank = kingSquare.Rank + (whiteToMove ? -1 : 1);
+                if (attackingPawnRank >= 8 || attackingPawnRank < 0)
+                    return false;
+
+                var leftPawnAttacker = kingFile - 1;
+                if (leftPawnAttacker >= 0 && GetPiece(new Square(attackingPawnRank, leftPawnAttacker)) == attackingPawn)
+                    return true;
+
+                var rightPawnAttacker = kingFile + 1;
+                if (rightPawnAttacker < 8 && GetPiece(new Square(attackingPawnRank, rightPawnAttacker)) == attackingPawn)
+                    return true;
+
+                return false;
+            }
+        }
         #endregion
+        #region move list generation
+        internal ChessMove[] GetLegalMoves(bool guarding)
+        {
+            var moves = new List<ChessMove>();
+
+            for (var from = new Square(0); from.binary < Square.MaxValue; from.binary++)
+            {
+                var piece = GetPiece(from);
+
+                if (!IsOwnPiece(piece))
+                    continue;
+
+                GetPieceMoves(piece, from, moves, guarding);
+            }
+
+            return moves.ToArray();
+        }
+        private void GetPieceMoves(char piece, Square from, List<ChessMove> moves, bool guarding)
+        {
+            switch (piece)
+            {
+                case 'P':
+                case 'p':
+                    GetPawnMoves(from, moves, guarding);
+                    break;
+
+                case 'R':
+                case 'r':
+                    GetRookMoves(from, moves, guarding);
+                    break;
+
+                case 'N':
+                case 'n':
+                    GetKnightMoves(from, moves, guarding);
+                    break;
+
+                case 'B':
+                case 'b':
+                    GetBishopMoves(from, moves, guarding);
+                    break;
+
+                case 'Q':
+                case 'q':
+                    GetQueenMoves(from, moves, guarding);
+                    break;
+
+                case 'K':
+                case 'k':
+                    GetKingMoves(from, moves, guarding);
+                    break;
+            }
+        }
+        private void GetPawnMoves(Square from, List<ChessMove> moves, bool guarding)
+        {
+            int forward = whiteToMove ? 1 : -1;
+            var oneForward = from;
+            oneForward.Rank += forward;
+
+            if(GetPiece(oneForward)=='.' && !guarding)
+            {
+                TryAddMove(new ChessMove(from, oneForward), moves, guarding);
+
+                if (from.Rank == (whiteToMove ? 1 : 6))
+                {
+                    var twoForward = oneForward;
+                    twoForward.Rank += forward;
+
+                    if (GetPiece(twoForward) == '.')
+                        TryAddMove(new ChessMove(from, twoForward), moves, guarding);
+                }
+            }
+
+            var takeLeft = oneForward;
+            var file = takeLeft.File-1;
+            takeLeft.File = file;
+            if (file >= 0 && (IsEnemyPiece(takeLeft) || takeLeft == enPassantSquare))
+                TryAddMove(new ChessMove(from, takeLeft), moves, guarding);
+
+            var takeRight = oneForward;
+            file = takeRight.File+1;
+            takeRight.File = file;
+            if (file < 8 && (IsEnemyPiece(takeRight) || takeRight == enPassantSquare))
+                TryAddMove(new ChessMove(from, takeRight), moves, guarding);
+        }
+        private void GetKingMoves(Square from, List<ChessMove> moves, bool guarding)
+        {
+            for (var rankOffset = -1; rankOffset <= 1; rankOffset++)
+            {
+                var rank = from.Rank + rankOffset;
+                if (rank < 0 || rank >= 8)
+                    continue;
+
+                for (var fileOffset = -1; fileOffset <= 1; fileOffset++)
+                {
+                    if (rankOffset == 0 && fileOffset == 0)
+                        continue;
+
+                    var file = from.File + fileOffset;
+                    if (file < 0 || file >= 8)
+                        continue;
+
+                    var toSquare = new Square(rank, file);
+                    var takenPiece = GetPiece(toSquare);
+
+                    if (!TakingOwn(toSquare, guarding))
+                    {
+                        ChessMove move = new ChessMove(from, toSquare);
+                        TryAddMove(move, moves, guarding);
+                    }
+                }
+            }
+        }
+        private void GetQueenMoves(Square from, List<ChessMove> moves, bool guarding)
+        {
+            GetRookMoves(from, moves, guarding);
+            GetBishopMoves(from, moves, guarding);
+        }
+        private void GetRookMoves(Square from, List<ChessMove> moves, bool guarding)
+        {
+            for (var offset = 1; ; offset++)
+            {
+                var rank = from.Rank + offset;
+
+                if (rank < 0 || rank >= 8)
+                    break;
+
+                var toSquare = new Square(rank, from.File);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+            for (var offset = 1; ; offset++)
+            {
+                var file = from.File + offset;
+
+                if (file < 0 || file >= 8)
+                    break;
+
+                var toSquare = new Square(from.Rank, file);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+            for (var offset = 1; ; offset++)
+            {
+                var rank = from.Rank - offset;
+
+                if (rank < 0 || rank >= 8)
+                    break;
+
+                var toSquare = new Square(rank, from.File);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+            for (var offset = 1; ; offset++)
+            {
+                var file = from.File - offset;
+
+                if (file < 0 || file >= 8)
+                    break;
+
+                var toSquare = new Square(from.Rank, file);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+        }
+        private void GetBishopMoves(Square from, List<ChessMove> moves, bool guarding)
+        {
+            for (var offset = 1; ; offset++)
+            {
+                var rank = from.Rank + offset;
+                var file = from.File + offset;
+
+                if (rank < 0 || file < 0 || rank >= 8 || file >= 8)
+                    break;
+
+                var toSquare = new Square(rank, file);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+            for (var offset = 1; ; offset++)
+            {
+                var rank = from.Rank - offset;
+                var file = from.File - offset;
+
+                if (rank < 0 || file < 0 || rank >= 8 || file >= 8)
+                    break;
+
+                var toSquare = new Square(rank, file);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+            for (var offset = 1; ; offset++)
+            {
+                var rank = from.Rank + offset;
+                var file = from.File - offset;
+
+                if (rank < 0 || file < 0 || rank >= 8 || file >= 8)
+                    break;
+
+                var toSquare = new Square(rank, file);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+            for (var offset = 1; ; offset++)
+            {
+                var rank = from.Rank - offset;
+                var file = from.File + offset;
+
+                if (rank < 0 || file < 0 || rank >= 8 || file >= 8)
+                    break;
+
+                var toSquare = new Square(rank, file);
+                var takenPiece = GetPiece(toSquare);
+
+                if (takenPiece == '.')
+                    TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                else
+                {
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                    break;
+                }
+            }
+        }
+        private void GetKnightMoves(Square from, List<ChessMove> moves, bool guarding)
+        {
+            for (var rankOffset = -2; rankOffset <= 2; rankOffset++)
+            {
+                var rank = from.Rank + rankOffset;
+                if (rank < 0 || rank >= 8)
+                    continue;
+
+                for (var fileOffset = -2; fileOffset <= 2; fileOffset++)
+                {
+                    var file = from.File + fileOffset;
+                    if (file < 0 || file >= 8)
+                        continue;
+
+                    // skip invalid horsey moves
+                    if (Math.Abs(rankOffset) + Math.Abs(fileOffset) != 3)
+                        continue;
+
+                    var toSquare = new Square(rank, file);
+                    var takenPiece = GetPiece(toSquare);
+
+                    if (!TakingOwn(toSquare, guarding))
+                        TryAddMove(new ChessMove(from, toSquare), moves, guarding);
+                }
+            }
+        }
+        private void TryAddMove(ChessMove move, List<ChessMove> moves, bool guarding)
+        {
+            //if(move.binary == ChessMove.Parse("b2a1").binary) { }
+
+            if (guarding || !ApplyMove(move).InCheck)
+                moves.Add(move);
+        }
+        #endregion
+        private bool IsWhitePiece(char piece) => piece >= 'A' && piece <= 'Z';
+        private bool IsBlackPiece(char piece) => piece >= 'a' && piece <= 'z';
+        private bool TakingOwn(Square toSquare, bool guarding)
+        {
+            if (guarding)
+                return false;
+
+            return IsOwnPiece(toSquare);
+        }
+        private bool IsOwnPiece(Square square)
+        {
+            var piece = GetPiece(square);
+
+            return IsOwnPiece(piece);
+        }
+        private bool IsOwnPiece(char piece)
+        {
+            if (piece != '.')
+                if (whiteToMove)
+                {
+                    if (IsWhitePiece(piece))
+                        return true;
+                }
+                else
+                {
+                    if (IsBlackPiece(piece))
+                        return true;
+                }
+            return false;
+        }
+        private bool IsEnemyPiece(Square square)
+        {
+            var piece = GetPiece(square);
+
+            return IsEnemyPiece(piece);
+        }
+        private bool IsEnemyPiece(char piece)
+        {
+            return piece != '.' && !IsOwnPiece(piece);
+        }
 
         // overrides
         public override string ToString()
