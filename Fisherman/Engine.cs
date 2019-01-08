@@ -126,15 +126,11 @@ namespace Fisherman
             var mainline = bestMove;
             TellGUI("info depth {0} multipv {1} score {2} {3} nodes {4} nps {5} time {6} pv {7}\n", depth, multipv, scoreMode, score, nodes, (int)nps, (int)timems, mainline);
 
-            // an infinite search must wait for the GUI to stop the search
             // a normal search can be terminated by the engine
-            while (searching)
-            {
-                Thread.Sleep(10);
-                // normal search we can stop the search
-                if (!infinite)
-                    searching = false;
-            }
+            if (infinite)
+                // an infinite search must wait for a stop command from the GUI
+                while (searching)
+                    Thread.Sleep(10);
 
             return bestMove;
         }
