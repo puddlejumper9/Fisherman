@@ -88,7 +88,7 @@ namespace Fisherman
         internal ChessPosition ApplyMove(ChessMove move)
         {
             // TODO ChessPosition.ApplyMove add support for castling
-            // TODO ChessPositoin.ApplyMove flag enPassant square
+            // TODO ChessPositoin.ApplyMove update enPassant square
 
             var newPosition = Clone();
 
