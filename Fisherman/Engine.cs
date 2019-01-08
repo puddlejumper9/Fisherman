@@ -204,8 +204,7 @@ namespace Fisherman
                 message = e.Message;
             }
 
-            if (networked)
-                Console.WriteLine("G:{0}", message);
+            DebugWrite("G:{0}", message);
 
             return message;
         }
@@ -220,10 +219,10 @@ namespace Fisherman
             DebugWrite("E:{0}", message);
         }
 
-        private void DebugWrite(string format, params object[] arg)
+        private void DebugWrite(string format, string message)
         {
             if (networked)
-                Console.Write(format, arg);
+                Console.Write(format, message);
         }
 
         private void OpenStreams(string[] args)
