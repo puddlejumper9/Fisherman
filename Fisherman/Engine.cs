@@ -200,7 +200,7 @@ namespace Fisherman
                 message = e.Message;
             }
 
-            DebugWrite("G:{0}", message);
+            DebugWrite("G:{0}\n", message);
 
             return message;
         }
