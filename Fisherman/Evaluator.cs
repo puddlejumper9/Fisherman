@@ -36,13 +36,12 @@ namespace Fisherman
 
             for (int i = 0; i < placeholderEvaluation.Length; i++)
             {
-                var moveValue = 0.0f;
-
-                if (i == bestMove.binary)
-                    moveValue = 1.0f;
-
-                placeholderEvaluation[i] = moveValue;
+                placeholderEvaluation[i] = 0.0f;
             }
+
+            // flag selected move as good evaluation
+            placeholderEvaluation[bestMove.binary] = 1.0f;
+
 
             /* TODO perform an actual query of the neural network
              * and deserialize the output to the moveValue array
