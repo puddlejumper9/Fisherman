@@ -24,10 +24,13 @@ namespace Fisherman
         {
             float[][] moveValues = new float[positions.Length][];
 
+            // get list of legal moves
             var moves = positions[0].GetLegalMoves(false);
 
+            // randomly select a legal move
             ChessMove bestMove = moves[rand.Next(moves.Length)];
 
+            // evaluation of moves to indicate selected move
             var placeholderEvaluation = new float[ChessMove.TotalPossible];
             moveValues[0] = placeholderEvaluation;
 
