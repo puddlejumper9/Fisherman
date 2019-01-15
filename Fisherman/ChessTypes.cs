@@ -764,10 +764,10 @@ namespace Fisherman
              * ........
              * ........
              */
-
+            
             StringBuilder sb = new StringBuilder();
 
-            var playerInfoFormat = "{0,1} {1,3} {2,2}\n";
+            var playerInfoFormat = "{0,1} {1} {2}\n";
             
             // render black info
             var blacksMove = !whiteToMove ? "*" : "";
@@ -775,11 +775,9 @@ namespace Fisherman
             var blackCastleShort = blackOO ?? ' ';
 
             sb.AppendFormat(playerInfoFormat, blacksMove, blackCastleLong, blackCastleShort);
-            sb.AppendLine();
 
             // render board
-            sb.AppendLine(board.ToString());
-            sb.AppendLine();
+            sb.Append(board.ToString());
 
             // render white info
             var whitesMove = whiteToMove ? "*" : "";
