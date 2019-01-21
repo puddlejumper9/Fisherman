@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,15 +12,32 @@ namespace Fisherman
     class Evaluator
     {
         static Random rand = new Random();
+        static NetworkStream evaluatorStream;
+        static StreamWriter input;
+        static StreamReader output;
 
         internal static async Task InitAsync()
         {
-            await Task.Run((Action)Init);
+            //await Task.Run((Action)Init);
+            Init();
         }
 
-        static void Init()
+        internal static void Init()
         {
-            // TODO start the evaluator and grab standard in/out
+            // TODO connect to the evaluator and grab standard in/out
+
+            var hostname = "localhost";
+            var port = 65432;
+
+            var evaluatorClient = new TcpClient();
+            evaluatorClient.Connect(hostname, port);
+
+            evaluatorStream = evaluatorClient.GetStream();
+
+            input = new StreamWriter(evaluatorStream);
+            output = new StreamReader(evaluatorStream);
+
+            
         }
 
         internal static float[][] Evaluate(ChessPosition[] positions)
