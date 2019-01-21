@@ -32,7 +32,8 @@ namespace Fisherman
         internal void Start(string[] args)
         {
             // initialize the engine
-            EvalInitT = Evaluator.InitAsync();
+            //EvalInitT = Evaluator.InitAsync();
+            Evaluator.Init();
 
             while (true)
             {
